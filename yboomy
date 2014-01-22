@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+"""Helper for dmenu that stores frequency sorted application runs"""
+import os
+import sys
+import shelve
+
+SHELF_FILE = os.getenv('HOME') + '/.config/yboomy.cache'
+
+
+class BoomShelf(object):
+    """A helper class that manages the backend file store, slower inserts, fast
+    reads.
+    Assuming that numbers are not executables.
+    0 holds all valid numbers that are execution tallies.
+    Numbers hold alphabetically sorted list of executables that have been
+    run that many times.
+    Executable strings hold the number of times they have been executed.
+
+    """
+    def __init__(self, filename):
+        self.filename = filename
+
+    @staticmethod
+    def remove_item(shelf, count, item):
+        """Remove an item from a list in the shelf"""
+        old_list = shelf[count]
+        old_list.remove(item)
+        shelf[count] = old_list
+        if not old_list and count != '0':
+            BoomShelf.remove_item(shelf, '0', count)
+
+    @staticmethod
+    def add_item(shelf, count, item):
+        """Add an item to a list in the shelf"""
+        old_list = shelf[count]
+        old_list.append(item)
+        old_list.sort()
+        shelf[count] = old_list
+
+    def increment_command(self, command):
+        """Update the frequency table by incrementing run command"""
+        if not any([True for char in list(command) if not char.isdigit()]):
+            return
+
+        shelf = shelve.open(self.filename)
+        if '0' not in shelf:
+            shelf['0'] = []
+        count = 1
+        if command in shelf:
+            count = int(shelf[command])
+            BoomShelf.remove_item(shelf, str(count), command)
+            count += 1
+
+        count = str(count)
+        shelf[command] = count
+        if not count in shelf['0']:
+            BoomShelf.add_item(shelf, '0', count)
+        if not count in shelf:
+            shelf[count] = [command]
+        else:
+            BoomShelf.add_item(shelf, count, command)
+
+        shelf.close()
+
+    def print_list(self):
+        """Print executables in frequency, alphabetical order"""
+        shelf = shelve.open(self.filename)
+        if '0' not in shelf:
+            return
+        for count in reversed(shelf['0']):
+            for item in shelf[count]:
+                print(item)
+
+        shelf.close()
+
+
+def main(chosen=None):
+    """Either print the known executables in frequency order, or update
+    the frequency table with the run command
+
+    """
+    boom = BoomShelf(SHELF_FILE)
+    if not chosen:
+        boom.print_list()
+    else:
+        boom.increment_command(chosen)
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        sys.exit()
+    if sys.argv[1] == 'print':
+        main()
+    if sys.argv[1] == 'run':
+        for line in sys.stdin:
+            if line != '':
+                main(line.split()[0])
+            print(line)
