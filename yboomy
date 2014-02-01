@@ -27,6 +27,7 @@ class BoomShelf(object):
         old_list.remove(item)
         shelf[count] = old_list
         if not old_list and count != '0':
+            del shelf[count]
             BoomShelf.remove_item(shelf, '0', count)
 
     @staticmethod
@@ -34,8 +35,18 @@ class BoomShelf(object):
         """Add an item to a list in the shelf"""
         old_list = shelf[count]
         old_list.append(item)
-        old_list.sort()
+        if count == '0':
+            old_list.sort(key=int)
+        else:
+            old_list.sort()
         shelf[count] = old_list
+
+    def dump(self):
+        """Just dump the current shelf for debug"""
+        shelf = shelve.open(self.filename)
+        for key in shelf.keys():
+            print("%s:%s" % (key, shelf[key]))
+        shelf.close()
 
     def increment_command(self, command):
         """Update the frequency table by incrementing run command"""
@@ -80,13 +91,17 @@ def main(chosen=None):
 
     """
     boom = BoomShelf(SHELF_FILE)
-    if not chosen:
+    if chosen is None:
         boom.print_list()
     else:
         boom.increment_command(chosen)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
+        sys.exit()
+
+    if sys.argv[1] == 'dump':
+        BoomShelf(SHELF_FILE).dump()
         sys.exit()
     if sys.argv[1] == 'print':
         main()
