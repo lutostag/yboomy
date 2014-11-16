@@ -33,24 +33,27 @@ class BoomShelf(object):
     @staticmethod
     def add_item(shelf, count, item):
         """Add an item to a list in the shelf"""
-        old_list = shelf[count]
-        old_list.append(item)
-        if count == '0':
-            old_list.sort(key=int)
+        if count not in shelf:
+            shelf[count] = [item]
         else:
-            old_list.sort()
-        shelf[count] = old_list
+            old_list = shelf[count]
+            old_list.append(item)
+            if count == '0':
+                old_list.sort(key=int)
+            else:
+                old_list.sort()
+            shelf[count] = old_list
 
     def dump(self):
         """Just dump the current shelf for debug"""
         shelf = shelve.open(self.filename)
-        for key in shelf.keys():
-            print("%s:%s" % (key, shelf[key]))
+        for key, value in shelf.items():
+            print("%s:%s" % (key, value))
         shelf.close()
 
     def increment_command(self, command):
         """Update the frequency table by incrementing run command"""
-        if not any([True for char in list(command) if not char.isdigit()]):
+        if all([char.isdigit() for char in command]):
             return
 
         shelf = shelve.open(self.filename)
@@ -64,12 +67,9 @@ class BoomShelf(object):
 
         count = str(count)
         shelf[command] = count
-        if not count in shelf['0']:
+        if count not in shelf['0']:
             BoomShelf.add_item(shelf, '0', count)
-        if not count in shelf:
-            shelf[count] = [command]
-        else:
-            BoomShelf.add_item(shelf, count, command)
+        BoomShelf.add_item(shelf, count, command)
 
         shelf.close()
 
@@ -77,6 +77,7 @@ class BoomShelf(object):
         """Print executables in frequency, alphabetical order"""
         shelf = shelve.open(self.filename)
         if '0' not in shelf:
+            shelf.close()
             return
         for count in reversed(shelf['0']):
             for item in shelf[count]:
