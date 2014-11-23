@@ -73,6 +73,16 @@ class BoomShelf(object):
 
         shelf.close()
 
+    def remove_command(self, command):
+        """Removes a command from the table entirely"""
+        shelf = shelve.open(self.filename)
+        if command not in shelf:
+            shelf.close()
+            return
+        count = shelf[command]
+        BoomShelf.remove_item(shelf, str(count), command)
+        shelf.close()
+
     def print_list(self):
         """Print executables in frequency, alphabetical order"""
         shelf = shelve.open(self.filename)
@@ -106,6 +116,10 @@ if __name__ == '__main__':
         sys.exit()
     if sys.argv[1] == 'print':
         main()
+    if sys.argv[1] == 'remove':
+        if len(sys.argv) < 3:
+            sys.exit()
+        BoomShelf(SHELF_FILE).remove_command(sys.argv[2])
     if sys.argv[1] == 'run':
         for line in sys.stdin:
             if line != '':

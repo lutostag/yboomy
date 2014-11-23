@@ -4,5 +4,5 @@ I tried to make this run quickly and without complex dependencies. It will prepe
 
 yboomy_run is forked from dmenu_run so the licensing was kept the same as that project (MIT/X Consortium license).  
 
-You will need dmenu andstest from suckless.org (there might be a package named suckless-tools or something similar for your distro providing you with these executables).  
+You will need dmenu and stest from suckless.org (there might be a package named suckless-tools or something similar for your distro providing you with these executables).  
 You will also need python2 or python3 -- it will work with either but the shelve backend can not be used by both interchangeably -- it should be one XOR the other.  
