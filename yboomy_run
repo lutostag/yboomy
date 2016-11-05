@@ -10,6 +10,6 @@ fi
 	if stest -dqr -n "$cache" $PATH; then
             ( yboomy print; stest -flx $PATH | sort -u | tee "$cache" ) | dmenu "$@"
 	else
-	    yboomy print | cat - "$cache" | dmenu "$@"
+            ( yboomy print | tee /dev/stderr | grep -Fvf - $cache ) 2>&1 | dmenu "$@"
 	fi
 ) | yboomy run | ${SHELL:-"/bin/sh"} &
